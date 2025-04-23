@@ -3,7 +3,6 @@ using System.IO.Ports;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Timers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,10 +20,31 @@ namespace WaterLevelUploader
 
         static async Task Main(string[] args)
         {
-            _serialPort = new SerialPort("/dev/ttyUSB0", 9600);
-            _serialPort.Open();
-            _serialPort.NewLine = "\n";
-            Console.WriteLine("Serial-port opened.");
+            string[] possiblePorts = { "/dev/ttyUSB0", "/dev/ttyUSB1" };
+            bool portOpened = false;
+
+            foreach (var portName in possiblePorts)
+            {
+                try
+                {
+                    _serialPort = new SerialPort(portName, 9600);
+                    _serialPort.NewLine = "\n";
+                    _serialPort.Open();
+                    Console.WriteLine($"Serial-port opened on {portName}.");
+                    portOpened = true;
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not open {portName}: {ex.Message}");
+                }
+            }
+
+            if (!portOpened)
+            {
+                Console.WriteLine("No valid serial port found. Exiting...");
+                return;
+            }
 
             readTimer = new System.Timers.Timer(60000); // 1 minute
             readTimer.Elapsed += ReadFromArduino;
@@ -37,10 +57,10 @@ namespace WaterLevelUploader
             sendTimer.Start();
 
             Console.WriteLine("Started reading and sending... Press Ctrl+C to stop.");
-            await Task.Delay(-1);
+            await Task.Delay(-1); // Keeps the app running
         }
 
-        static void ReadFromArduino(object sender, ElapsedEventArgs e)
+        static void ReadFromArduino(object sender, System.Timers.ElapsedEventArgs e)
         {
             try
             {
@@ -51,13 +71,21 @@ namespace WaterLevelUploader
                     if (int.TryParse(valueStr, out int value))
                     {
                         readings.Add(value);
-                        Console.WriteLine($"Read data: {value}");
+                        Console.WriteLine($"[{DateTime.Now}] Read data: {value}");
                     }
                 }
+            }
+            catch (TimeoutException)
+            {
+                Console.WriteLine("Timeout: No data available from Arduino.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Read error: {ex.Message}");
+            }
+            finally
+            {
+                _serialPort.DiscardInBuffer(); // Always flush buffer
             }
         }
 
@@ -72,7 +100,7 @@ namespace WaterLevelUploader
             int avg = (int)Math.Round(readings.Average());
             readings.Clear();
 
-            Console.WriteLine($"Average: {avg}");
+            Console.WriteLine($"[{DateTime.Now}] Average: {avg}");
             Console.WriteLine($"Uploading: device_id={deviceId}, water_level={avg}");
 
             var payload = new
