@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend
@@ -10,18 +11,6 @@ interface DataPoint {
   water_level: number;
 }
 
-const imageDescriptions = [
-"Banana Pi's placed in 3D-printed case, with a 5V power supply and a local 1gb connection.",
-"Arduino with the water level sensor placed in water for testing.",
-"Water sensor in a glass of water.",
-"Sensor lights up and is active + best friend in the background.",
-"Arduino (Actually a GeekCreit) with the water level sensor connected.",
-"Rack top with Arduino connected to a Banana Pi via USB.",
-"Full rack, machine on top is for another server site (will remove soon).",
-"(Sorry for the cables) Rack info: Mikrotik Router, Managed HP 1810-24G switch, 5 Banana Pi M4s, 2 HP 8300 as NAS and Rack controller with cockpit, GreenCell UPS. ",
-];
-
-
 const timeRanges = [
   { label: 'Last Hour', value: 'last_hour' },
   { label: 'Last 6 Hours', value: 'last_6_hours' },
@@ -32,9 +21,21 @@ const timeRanges = [
 ];
 
 const lambdaUrl = 'https://bxja4letmr3vymmxfbd5rl2d5m0fshvb.lambda-url.eu-north-1.on.aws/';
+
 const Images = [
   '/images/1.jpg', '/images/2.jpg', '/images/3.jpg', '/images/4.jpg',
   '/images/5.jpg', '/images/6.jpg', '/images/7.jpg', '/images/8.jpg',
+];
+
+const imageDescriptions = [
+  "Banana Pi's placed in 3D-printed case, with a 5V power supply and a local 1gb connection.",
+  "Arduino with the water level sensor placed in water for testing.",
+  "Water sensor in a glass of water.",
+  "Sensor lights up and is active + best friend in the background.",
+  "Arduino (Actually a GeekCreit) with the water level sensor connected.",
+  "Rack top with Arduino connected to a Banana Pi via USB.",
+  "Full rack, machine on top is for another server site (will remove soon).",
+  "(Sorry for the cables) Rack info: Mikrotik Router, Managed HP 1810-24G switch, 5 Banana Pi M4s, 2 HP 8300 as NAS and Rack controller with cockpit, GreenCell UPS.",
 ];
 
 const SensorDashboard: React.FC = () => {
@@ -45,7 +46,7 @@ const SensorDashboard: React.FC = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const scheduledFetchRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
       const response = await fetch(`${lambdaUrl}?device_id=1&range=${range}`);
@@ -74,7 +75,7 @@ const SensorDashboard: React.FC = () => {
       console.error('Error fetching data:', error);
     }
     setLoading(false);
-  }, [range]);
+  };
 
   const scheduleNextFetch = (lastTimestamp: Date) => {
     if (scheduledFetchRef.current) {
@@ -82,11 +83,11 @@ const SensorDashboard: React.FC = () => {
     }
     const now = new Date().getTime();
     const lastDataTime = lastTimestamp.getTime();
-    const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000; // 5 min 10 sek
+    const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000;
     let delay = nextFetchTime - now;
 
     if (delay < 0) {
-      delay = 5 * 60 * 1000; // Hvis vi er for sent ute, bare vent 5 minutter
+      delay = 5 * 60 * 1000;
     }
 
     scheduledFetchRef.current = setTimeout(() => {
@@ -101,9 +102,7 @@ const SensorDashboard: React.FC = () => {
         clearTimeout(scheduledFetchRef.current);
       }
     };
-  }, [fetchData]);
-
-
+  }, [range]);
 
   const getStatus = () => {
     if (latestValue === null) return 'No Data';
@@ -154,6 +153,7 @@ const SensorDashboard: React.FC = () => {
           </LineChart>
         </ResponsiveContainer>
       )}
+
       <h2 className="gallery-title">🔌 Wiring & System Overview</h2>
       <div className="diagrams-container">
         <div className="diagram-card">
@@ -192,7 +192,7 @@ const SensorDashboard: React.FC = () => {
         </div>
         <p className="carousel-description">{imageDescriptions[currentImage]}</p>
 
-    </div>
+      </div>
   );
 };
 
