@@ -1,5 +1,5 @@
 ## 💧 Water-Sensor Monitoring With Dashboard – Real-Time Water Level Monitoring
-
+### [Visit the live project](https://iot.bjorgen.org)
 This project provides a complete IoT solution for monitoring liquid levels using an Arduino, a Banana Pi, and a graphical web dashboard with real-time charts and historical data.
 
 ---
@@ -127,9 +127,17 @@ Frontend runs at **http://localhost:3000**, fetching data from the Lambda GET UR
 
 ---
 
-### ✅ Coming Soon
+### ✅ 
 
 - 📷 Photos of physical wiring
-- 🗂️ PDF diagrams of the full setup
-- Multi-sensor and device_id support
-- Mobile-friendly dashboard enhancements
+  ![2](https://github.com/user-attachments/assets/50a8e8f4-327c-40de-9a54-3d6ddaff14f2)
+  ![6](https://github.com/user-attachments/assets/8ac7feac-15c9-455b-ac2c-217cb894bbda)
+  
+- 🗂️ Diagrams of the full setup
+  ![AWS arduino water sensor system](https://github.com/user-attachments/assets/f4f1a6e7-c478-4bec-9265-86cf0a5370b1)
+  ![arduino kobling](https://github.com/user-attachments/assets/e27b3c30-dda8-4d6d-b45e-28bc165646d6)
+
+
+- Dashboard
+  ![image](https://github.com/user-attachments/assets/88e3fdbb-ffbb-4f9e-a6b4-f74add4a5f9f)
+
