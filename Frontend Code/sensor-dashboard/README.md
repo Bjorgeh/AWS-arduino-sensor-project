@@ -1,46 +1,81 @@
-# Getting Started with Create React App
+# 💻 Sensor Dashboard (React GUI)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is the frontend dashboard for the Water Sensor Monitoring system. It visualizes water level data in real-time and supports historical data filtering via AWS Lambda.
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🚀 Features
 
-### `npm start`
+- Line chart of sensor data using **Recharts**
+- Dropdown to select time ranges (last hour, day, week, etc.)
+- Status display (Dry / Moist / Wet) with color indicator
+- Modern responsive layout using plain CSS
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+---
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 📦 Getting Started
 
-### `npm test`
+Make sure you have Node.js and npm installed.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 1. Install dependencies:
 
-### `npm run build`
+```bash
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### 2. Start the development server:
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This runs the app in development mode.  
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
-### `npm run eject`
+- The page reloads automatically on code changes.
+- Console will show any lint or runtime errors.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+---
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🔧 Environment Setup
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- This app fetches data from an **AWS Lambda Function URL**.
+- Make sure CORS is enabled on your Lambda (GET endpoint).
+- The expected URL pattern:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```
+https://your-lambda-get-url/?device_id=1&range=last_day
+```
 
-## Learn More
+Available `range` values:
+- `last_hour`
+- `last_6_hours`
+- `last_12_hours`
+- `last_day`
+- `last_week`
+- `last_month`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+You can modify the `lambdaUrl` inside:
+```tsx
+/src/pages/SensorDashboard.tsx
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+---
+
+## 🛠️ Build for Production
+
+To build the project for production:
+
+```bash
+npm run build
+```
+
+The app will be optimized and bundled into the `build/` folder, ready to be deployed.
+
+---
+
+## 📚 Learn More
+
+- [React Documentation](https://reactjs.org/)
+- [Recharts Documentation](https://recharts.org/)
+- [DynamoDB Time-Based Queries](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html)
