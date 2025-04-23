@@ -64,15 +64,26 @@ namespace WaterLevelUploader
         {
             try
             {
-                string line = _serialPort.ReadLine();
-                if (line.Contains("Sensor Value:"))
+                string latestLine = null;
+
+                // Les alle linjene i bufferen og ta den siste
+                while (_serialPort.BytesToRead > 0)
                 {
-                    var valueStr = line.Split(':')[1].Trim();
+                    latestLine = _serialPort.ReadLine();
+                }
+
+                if (latestLine != null && latestLine.Contains("Sensor Value:"))
+                {
+                    var valueStr = latestLine.Split(':')[1].Trim();
                     if (int.TryParse(valueStr, out int value))
                     {
                         readings.Add(value);
-                        Console.WriteLine($"[{DateTime.Now}] Read data: {value}");
+                        Console.WriteLine($"[{DateTime.Now}] Latest data: {value}");
                     }
+                }
+                else
+                {
+                    Console.WriteLine("No valid data found in buffer.");
                 }
             }
             catch (TimeoutException)
@@ -85,7 +96,7 @@ namespace WaterLevelUploader
             }
             finally
             {
-                _serialPort.DiscardInBuffer(); // Always flush buffer
+                _serialPort.DiscardInBuffer(); // Flush buffer uansett
             }
         }
 
