@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend
@@ -9,6 +9,18 @@ interface DataPoint {
   timestamp: string;
   water_level: number;
 }
+
+const imageDescriptions = [
+"Banana Pi's placed in 3D-printed case, with a 5V power supply and a local 1gb connection.",
+"Arduino with the water level sensor placed in water for testing.",
+"Water sensor in a glass of water.",
+"Sensor lights up and is active + best friend in the background.",
+"Arduino (Actually a GeekCreit) with the water level sensor connected.",
+"Rack top with Arduino connected to a Banana Pi via USB.",
+"Full rack, machine on top is for another server site (will remove soon).",
+"(Sorry for the cables) Rack info: Mikrotik Router, Managed HP 1810-24G switch, 5 Banana Pi M4s, 2 HP 8300 as NAS and Rack controller with cockpit, GreenCell UPS. ",
+];
+
 
 const timeRanges = [
   { label: 'Last Hour', value: 'last_hour' },
@@ -31,6 +43,7 @@ const SensorDashboard: React.FC = () => {
   const [range, setRange] = useState('last_day');
   const [latestValue, setLatestValue] = useState<number | null>(null);
   const [currentImage, setCurrentImage] = useState(0);
+  const scheduledFetchRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -55,6 +68,7 @@ const SensorDashboard: React.FC = () => {
       setData(formatted);
       if (formatted.length > 0) {
         setLatestValue(formatted[formatted.length - 1].water_level);
+        scheduleNextFetch(formatted[formatted.length - 1].timestampRaw);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -62,18 +76,34 @@ const SensorDashboard: React.FC = () => {
     setLoading(false);
   }, [range]);
 
-  // 👇 Sørg for at fetchData faktisk blir brukt
+  const scheduleNextFetch = (lastTimestamp: Date) => {
+    if (scheduledFetchRef.current) {
+      clearTimeout(scheduledFetchRef.current);
+    }
+    const now = new Date().getTime();
+    const lastDataTime = lastTimestamp.getTime();
+    const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000; // 5 min 10 sek
+    let delay = nextFetchTime - now;
+
+    if (delay < 0) {
+      delay = 5 * 60 * 1000; // Hvis vi er for sent ute, bare vent 5 minutter
+    }
+
+    scheduledFetchRef.current = setTimeout(() => {
+      fetchData();
+    }, delay);
+  };
+
   useEffect(() => {
     fetchData();
+    return () => {
+      if (scheduledFetchRef.current) {
+        clearTimeout(scheduledFetchRef.current);
+      }
+    };
   }, [fetchData]);
 
-  // Bildekarusell autoplay
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % Images.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
+
 
   const getStatus = () => {
     if (latestValue === null) return 'No Data';
@@ -124,13 +154,44 @@ const SensorDashboard: React.FC = () => {
           </LineChart>
         </ResponsiveContainer>
       )}
-
-      <h2 className="gallery-title">📷 Setup</h2>
-      <div className="carousel-container">
-        <button className="carousel-button" onClick={goPrev}>←</button>
-        <img src={Images[currentImage]} alt={`setup ${currentImage + 1}`} className="carousel-image" />
-        <button className="carousel-button" onClick={goNext}>→</button>
+      <h2 className="gallery-title">🔌 Wiring & System Overview</h2>
+      <div className="diagrams-container">
+        <div className="diagram-card">
+          <h3>Arduino Sensor Wiring</h3>
+          <img src="/images/arduino_overview.png" alt="Arduino Wiring" className="diagram-image" />
+          <p>
+            This diagram illustrates the physical wiring between the water level sensor and the Arduino.
+            The sensor's signal pin is connected to analog input A0 on the Arduino. Power is supplied via
+            the 5V and GND pins. This setup enables the Arduino to continuously read analog values representing
+            the current water level and transmit them to the Banana Pi via USB.
+          </p>
+          <ul>
+            <li><strong>VCC</strong> → 5V on Arduino</li>
+            <li><strong>GND</strong> → GND on Arduino</li>
+            <li><strong>Signal</strong> → A0 on Arduino</li>
+          </ul>
+        </div>
+        <div className="diagram-card">
+          <h3>System Overview</h3>
+          <img src="/images/system_overview.png" alt="System Overview" className="diagram-image" />
+          <p>
+            This high-level diagram shows the complete IoT system in action. The water sensor sends readings to
+            the Arduino, which transmits them over a serial USB connection to the Banana Pi M4. The Banana Pi
+            runs a .NET application that reads sensor data, calculates average levels at regular intervals,
+            and sends this data to an AWS Lambda function via HTTP POST. AWS Lambda stores the data in DynamoDB.
+            Finally, this dashboard fetches and visualizes the data dynamically, providing live monitoring of
+            water levels in an elegant and user-friendly interface.
+          </p>
+        </div>
       </div>
+      <h2 className="gallery-title">📷 Setup</h2>
+        <div className="carousel-container">
+          <button className="carousel-button" onClick={goPrev}>←</button>
+          <img src={Images[currentImage]} alt={`setup ${currentImage + 1}`} className="carousel-image" />
+          <button className="carousel-button" onClick={goNext}>→</button>
+        </div>
+        <p className="carousel-description">{imageDescriptions[currentImage]}</p>
+
     </div>
   );
 };
