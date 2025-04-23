@@ -67,6 +67,9 @@ npm start
 
 Frontend kjører på `http://localhost:3000` og henter data fra Lambda GET-endepunktet automatisk.
 
+![image](https://github.com/user-attachments/assets/c3340e3b-f254-4b64-b00e-9be2aa01a092)
+
+
 ---
 
 ### 🚀 .NET App for Banana Pi
