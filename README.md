@@ -1,149 +1,101 @@
-# 💧 Sensor Monitoring System – Arduino + Banana Pi + AWS 🚀
+## 💧 Water-Sensor Monitoring With Dashboard – Real-Time Water Level Monitoring
 
-This project allows you to **read water sensor values** from an **Arduino Mega**, send them through a **.NET app** running on a **Banana Pi**, and store them in **AWS DynamoDB** via **Lambda**. You can also retrieve historical data using a **Lambda GET API**.
-
----
-
-## 📦 Components Used:
-- Arduino Mega + Liquid Level Sensor
-- Banana Pi running Linux + .NET 8
-- AWS Lambda (Python)
-- AWS DynamoDB
-- Lambda Function URLs (public APIs)
+Dette prosjektet gir deg en komplett IoT-løsning for overvåking av væskenivå ved hjelp av en Arduino og en grafisk webapp.
 
 ---
 
-## ⚙️ System Overview:
+### 📁 Prosjektstruktur
 
-1. **Arduino Mega** reads water level every **minute** and sends data over **serial (USB)**.
-2. **Banana Pi** runs a **.NET app**:
-   - Reads values every **minute** from Arduino.
-   - Calculates an **average** every **5 minutes**.
-   - Sends the average to **AWS Lambda POST** → stores in DynamoDB.
-3. **AWS Lambda GET** retrieves data by time range (e.g., last hour, day, week).
+```
+/Arduino Code/
+└── arduino.ino                 # Koden lastes opp på Arduino Mega
 
----
+/AWS Lambda Code/
+├── SaveToDynamoDB.py          # Lambda-funksjon for å lagre sensorverdier
+└── GetFromDynamoDB.py         # Lambda-funksjon for å hente historiske data
 
-## 🔧 .NET App Setup on Banana Pi:
+/Controller Code/
+└── Program.cs                 # .NET 8 app som leser fra Arduino og sender til AWS
 
-- Reads from `/dev/ttyUSB0`.
-- Posts data to AWS every 5 minutes.
-- Automatically starts on boot via **systemd service**.
-
-### .NET App Features:
-- Serial read every **minute**.
-- AWS Lambda POST every **5 minutes**:
-  - `device_id`: static ID (e.g., 1).
-  - `water_level`: averaged value.
+/sensor-dashboard/
+├── src/pages/SensorDashboard.tsx   # Frontend dashboard med graf og UI
+└── public/index.html               # Tilpasset HTML-template
+```
 
 ---
 
-## 🌐 AWS Lambda Endpoints:
+### ⚙️ Krever følgende
 
-### 1. **POST Lambda URL (Send Data):**
-- **URL**: `https://a2qi5icu22wrd2cgswudq6d23a0zgsfl.lambda-url.eu-north-1.on.aws/`
-- **Payload Example**:
-  ```json
-  {
-    "device_id": 1,
-    "water_level": 512
-  }
-  ```
-
-- **Stores** data in DynamoDB table: `WaterLevelTable`.
+- Arduino Mega med Liquid Level Sensor
+- Banana Pi eller annen enhet med .NET 8 installert
+- AWS-konto med:
+  - DynamoDB-tabell (`WaterLevelTable`)
+  - To Lambda-funksjoner (GET/POST) med Function URL aktivert og CORS tillatt
+- React frontend med Recharts
+- Internettilgang på controller-enheten (for å sende data)
 
 ---
 
-### 2. **GET Lambda URL (Retrieve Data):**
-- **URL**: `https://bxja4letmr3vymmxfbd5rl2d5m0fshvb.lambda-url.eu-north-1.on.aws/`
-- **Query Parameters**:
-  - `device_id`: Required (e.g., 1)
-  - `range`: last_hour, last_day, last_week, last_month
+### 🧠 DynamoDB-oppsett
 
-- **Example**:
-  ```
-  https://bxja4letmr3vymmxfbd5rl2d5m0fshvb.lambda-url.eu-north-1.on.aws/?device_id=1&range=last_day
-  ```
-
-- **Response**:
-  ```json
-  {
-    "data": [
-      {
-        "device_id": 1,
-        "timestamp": "2025-04-23T12:30:00Z",
-        "water_level": 512
-      },
-      ...
-    ]
-  }
-  ```
+- Tabellnavn: `WaterLevelTable`
+- Primærnøkkel: `device_id` (Number)
+- Sorteringsnøkkel (om brukt): `timestamp` (String eller ISO8601)
+- Sørg for at IAM-rollen til Lambda har tillatelse til `dynamodb:PutItem` og `dynamodb:Query`.
 
 ---
 
-## 🗃️ DynamoDB Table Structure:
+### 💻 Frontend – Sensor Dashboard (React GUI)
 
-- **Table Name**: `WaterLevelTable`
-- **Attributes**:
-  - `device_id`: Number (Partition Key)
-  - `timestamp`: ISO8601 String (Sort Key recommended)
-  - `water_level`: Number
+#### 1. Gå til frontend-mappen:
 
----
+```bash
+cd sensor-dashboard
+```
 
-## 🔐 IAM Permissions:
+#### 2. Installer avhengigheter:
 
-- Lambda roles need:
-  - **AmazonDynamoDBReadOnlyAccess** (for GET Lambda)
-  - **AmazonDynamoDBFullAccess** or **PutItem** (for POST Lambda)
+```bash
+npm install
+```
 
----
+#### 3. Start utviklingsserver:
 
-## ⚡ Systemd Service for Auto-Start:
+```bash
+npm start
+```
 
-1. **.NET App Published** using:
-   ```bash
-   dotnet publish -c Release -r linux-arm64 --self-contained true -o /home/sql/WaterLevelUploader/publish
-   ```
-
-2. **Service File** `/etc/systemd/system/waterlevel.service`:
-   ```ini
-   [Unit]
-   Description=Water Level Uploader Service
-   After=network.target
-
-   [Service]
-   Type=simple
-   User=sql
-   WorkingDirectory=/home/sql/WaterLevelUploader/publish
-   ExecStart=/home/sql/WaterLevelUploader/publish/WaterLevelUploader
-   Restart=always
-   RestartSec=10
-
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-3. **Commands**:
-   ```bash
-   sudo systemctl daemon-reexec
-   sudo systemctl enable waterlevel.service
-   sudo systemctl start waterlevel.service
-   sudo systemctl status waterlevel.service
-   ```
+Frontend kjører på `http://localhost:3000` og henter data fra Lambda GET-endepunktet automatisk.
 
 ---
 
-## 🔥 Features in Progress:
-- More advanced querying (e.g., custom ranges).
-- Frontend visualization (graphs from GET API).
-- Alerts (e.g., if water levels drop too low).
+### 🚀 .NET App for Banana Pi
+
+- Kildekode: `/Controller Code/Program.cs`
+- Den leser fra Arduino via serial, sender data til Lambda hvert 5. minutt.
 
 ---
 
-## 👨‍💻 Author:
-- Developed by **bjorgen92** with love for embedded systems and cloud automation 💧☁️⚡
+### 🔌 Arduino-kobling
+
+Koblingsskjema og bilder kommer snart!
+- Sensor koblet til `A0` (analog)
+- GND og VCC til GND og 5V
 
 ---
 
-Let me know if you'd like to tweak or add anything else! 😄
+### 🌐 Lambda-endepunkter
+
+**POST (Save)**  
+`https://your-lambda-save-url/...`
+
+**GET (Fetch by range)**  
+`https://your-lambda-get-url/?device_id=1&range=last_day`
+
+---
+
+### ✅ Kommer snart
+
+- Bilder av fysiske koblinger
+- PDF-skjema over hele oppsettet
+- Mulighet for flere sensorer og enhetsvalg i GUI
