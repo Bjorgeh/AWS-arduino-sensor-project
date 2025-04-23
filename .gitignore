@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/Frontend Code/sensor-dashboard/node_modules
 /.pnp
 .pnp.js
 
@@ -9,7 +10,7 @@
 /coverage
 
 # production
-/build
+/Frontend Code/sensor-dashboard/build
 
 # misc
 .DS_Store

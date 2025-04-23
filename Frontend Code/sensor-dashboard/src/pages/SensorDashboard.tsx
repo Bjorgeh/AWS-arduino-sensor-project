@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import './SensorDashboard.css';
 
@@ -24,7 +24,7 @@ const SensorDashboard: React.FC = () => {
   const [range, setRange] = useState('last_day');
   const [latestValue, setLatestValue] = useState<number | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${lambdaUrl}?device_id=1&range=${range}`);
@@ -41,11 +41,11 @@ const SensorDashboard: React.FC = () => {
       console.error('Error fetching data:', error);
     }
     setLoading(false);
-  };
+  }, [range]);
 
   useEffect(() => {
     fetchData();
-  }, [range]);
+  }, [fetchData]);
 
   const getStatus = () => {
     if (latestValue === null) return 'No Data';
