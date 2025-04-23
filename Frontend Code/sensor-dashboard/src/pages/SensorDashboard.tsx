@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend
@@ -46,7 +45,25 @@ const SensorDashboard: React.FC = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const scheduledFetchRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchData = async () => {
+  const scheduleNextFetch = (lastTimestamp: Date) => {
+    if (scheduledFetchRef.current) {
+      clearTimeout(scheduledFetchRef.current);
+    }
+    const now = new Date().getTime();
+    const lastDataTime = lastTimestamp.getTime();
+    const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000;
+    let delay = nextFetchTime - now;
+
+    if (delay < 0) {
+      delay = 5 * 60 * 1000;
+    }
+
+    scheduledFetchRef.current = setTimeout(() => {
+      fetchData();
+    }, delay);
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${lambdaUrl}?device_id=1&range=${range}`);
@@ -75,25 +92,7 @@ const SensorDashboard: React.FC = () => {
       console.error('Error fetching data:', error);
     }
     setLoading(false);
-  };
-
-  const scheduleNextFetch = (lastTimestamp: Date) => {
-    if (scheduledFetchRef.current) {
-      clearTimeout(scheduledFetchRef.current);
-    }
-    const now = new Date().getTime();
-    const lastDataTime = lastTimestamp.getTime();
-    const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000;
-    let delay = nextFetchTime - now;
-
-    if (delay < 0) {
-      delay = 5 * 60 * 1000;
-    }
-
-    scheduledFetchRef.current = setTimeout(() => {
-      fetchData();
-    }, delay);
-  };
+  }, [range]);
 
   useEffect(() => {
     fetchData();
@@ -102,7 +101,7 @@ const SensorDashboard: React.FC = () => {
         clearTimeout(scheduledFetchRef.current);
       }
     };
-  }, [range]);
+  }, [fetchData]);
 
   const getStatus = () => {
     if (latestValue === null) return 'No Data';
@@ -185,14 +184,13 @@ const SensorDashboard: React.FC = () => {
         </div>
       </div>
       <h2 className="gallery-title">📷 Setup</h2>
-        <div className="carousel-container">
-          <button className="carousel-button" onClick={goPrev}>←</button>
-          <img src={Images[currentImage]} alt={`setup ${currentImage + 1}`} className="carousel-image" />
-          <button className="carousel-button" onClick={goNext}>→</button>
-        </div>
-        <p className="carousel-description">{imageDescriptions[currentImage]}</p>
-
+      <div className="carousel-container">
+        <button className="carousel-button" onClick={goPrev}>←</button>
+        <img src={Images[currentImage]} alt={`setup ${currentImage + 1}`} className="carousel-image" />
+        <button className="carousel-button" onClick={goNext}>→</button>
       </div>
+      <p className="carousel-description">{imageDescriptions[currentImage]}</p>
+    </div>
   );
 };
 
