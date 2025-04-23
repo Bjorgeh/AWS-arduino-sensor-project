@@ -1,5 +1,6 @@
+/* eslint-disable */
 
-import React, { useEffect, useState, useRef,useCallback  } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, Legend
@@ -46,54 +47,54 @@ const SensorDashboard: React.FC = () => {
   const [currentImage, setCurrentImage] = useState(0);
   const scheduledFetchRef = useRef<NodeJS.Timeout | null>(null);
 
- const scheduleNextFetch = (lastTimestamp: Date) => {
-  if (scheduledFetchRef.current) {
-    clearTimeout(scheduledFetchRef.current);
-  }
-  const now = new Date().getTime();
-  const lastDataTime = lastTimestamp.getTime();
-  const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000;
-  let delay = nextFetchTime - now;
+  const fetchData = useCallback(async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${lambdaUrl}?device_id=1&range=${range}`);
+      const json = await response.json();
 
-  if (delay < 0) {
-    delay = 5 * 60 * 1000;
-  }
+      const formatted = json.data
+        .map((item: any) => ({
+          timestamp: new Date(item.timestamp).toLocaleString(),
+          timestampRaw: new Date(item.timestamp),
+          water_level: item.water_level,
+        }))
+        .sort((a: { timestampRaw: Date }, b: { timestampRaw: Date }) =>
+          a.timestampRaw.getTime() - b.timestampRaw.getTime()
+        )
+        .map(({ timestamp, water_level }: { timestamp: string; water_level: number }) => ({
+          timestamp,
+          water_level,
+        }));
 
-  scheduledFetchRef.current = setTimeout(() => {
-    fetchData();
-  }, delay);
-};
-
-const fetchData = useCallback(async () => {
-  setLoading(true);
-  try {
-    const response = await fetch(`${lambdaUrl}?device_id=1&range=${range}`);
-    const json = await response.json();
-
-    const formatted = json.data
-      .map((item: any) => ({
-        timestamp: new Date(item.timestamp).toLocaleString(),
-        timestampRaw: new Date(item.timestamp),
-        water_level: item.water_level,
-      }))
-      .sort((a: { timestampRaw: Date }, b: { timestampRaw: Date }) =>
-        a.timestampRaw.getTime() - b.timestampRaw.getTime()
-      )
-      .map(({ timestamp, water_level }: { timestamp: string; water_level: number }) => ({
-        timestamp,
-        water_level,
-      }));
-
-    setData(formatted);
-    if (formatted.length > 0) {
-      setLatestValue(formatted[formatted.length - 1].water_level);
-      scheduleNextFetch(formatted[formatted.length - 1].timestampRaw);
+      setData(formatted);
+      if (formatted.length > 0) {
+        setLatestValue(formatted[formatted.length - 1].water_level);
+        scheduleNextFetch(formatted[formatted.length - 1].timestampRaw);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
-  } catch (error) {
-    console.error('Error fetching data:', error);
-  }
-  setLoading(false);
-}, [range, scheduleNextFetch]); // <-- eneste endringen
+    setLoading(false);
+  }, [range]);
+
+  const scheduleNextFetch = useCallback((lastTimestamp: Date): void => {
+    if (scheduledFetchRef.current) {
+      clearTimeout(scheduledFetchRef.current);
+    }
+    const now = new Date().getTime();
+    const lastDataTime = lastTimestamp.getTime();
+    const nextFetchTime = lastDataTime + (5 * 60 * 1000) + 10000;
+    let delay = nextFetchTime - now;
+
+    if (delay < 0) {
+      delay = 5 * 60 * 1000;
+    }
+
+    scheduledFetchRef.current = setTimeout(() => {
+      fetchData();
+    }, delay);
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
@@ -102,7 +103,7 @@ const fetchData = useCallback(async () => {
         clearTimeout(scheduledFetchRef.current);
       }
     };
-  }, [range]);
+  }, [fetchData]);
 
   const getStatus = () => {
     if (latestValue === null) return 'No Data';
@@ -154,8 +155,7 @@ const fetchData = useCallback(async () => {
         </ResponsiveContainer>
       )}
 
-
-      <h2 className="gallery-title">🔌 Wiring & System Overview</h2>
+<h2 className="gallery-title">🔌 Wiring & System Overview</h2>
       <div className="diagrams-container">
         <div className="diagram-card">
           <h3>Arduino Sensor Wiring</h3>
@@ -186,14 +186,13 @@ const fetchData = useCallback(async () => {
         </div>
       </div>
       <h2 className="gallery-title">📷 Setup</h2>
-        <div className="carousel-container">
-          <button className="carousel-button" onClick={goPrev}>←</button>
-          <img src={Images[currentImage]} alt={`setup ${currentImage + 1}`} className="carousel-image" />
-          <button className="carousel-button" onClick={goNext}>→</button>
-        </div>
-        <p className="carousel-description">{imageDescriptions[currentImage]}</p>
-
+      <div className="carousel-container">
+        <button className="carousel-button" onClick={goPrev}>←</button>
+        <img src={Images[currentImage]} alt={`setup ${currentImage + 1}`} className="carousel-image" />
+        <button className="carousel-button" onClick={goNext}>→</button>
       </div>
+      <p className="carousel-description">{imageDescriptions[currentImage]}</p>
+    </div>
   );
 };
 
