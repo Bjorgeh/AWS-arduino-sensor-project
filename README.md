@@ -26,8 +26,11 @@ Dette prosjektet gir deg en komplett IoT-løsning for overvåking av væskenivå
 
 ### ⚙️ Krever følgende
 
-- Arduino Mega med Liquid Level Sensor
+- Arduino Mega med Water Lever sensor Module
+  ![image](https://github.com/user-attachments/assets/0958f8a3-af73-4b40-9f7f-a69934fc5779)
+  ![image](https://github.com/user-attachments/assets/67d297c2-bc89-4296-a4bc-53df40886fb5)
 - Banana Pi eller annen enhet med .NET 8 installert
+  ![image](https://github.com/user-attachments/assets/192584b7-d572-49eb-9c57-8f5794b2ce97)
 - AWS-konto med:
   - DynamoDB-tabell (`WaterLevelTable`)
   - To Lambda-funksjoner (GET/POST) med Function URL aktivert og CORS tillatt
