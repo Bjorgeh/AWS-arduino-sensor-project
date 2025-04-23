@@ -103,6 +103,7 @@ Frontend runs at **http://localhost:3000**, fetching data from the Lambda GET UR
 ### 🌐 Lambda Function URLs
 
 - **POST (Save Data):**
+- Code in /AWS Lambda Code/SaveToDynamoDB.py
   - `https://your-lambda-save-url/`
   - Body:  
     ```json
@@ -110,6 +111,7 @@ Frontend runs at **http://localhost:3000**, fetching data from the Lambda GET UR
     ```
 
 - **GET (Fetch Data):**
+- Code in /AWS Lambda Code/GetFromDynamoDB.py
   - `https://your-lambda-get-url/?device_id=1&range=last_day`
   - Range values: `last_hour`, `last_day`, `last_week`, etc.
 
