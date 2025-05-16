@@ -102,12 +102,15 @@ docker-compose up -d
 ## Add this to your dotnet apps (ArduinoToKakfaProducer & kafkaforwarder), they wont work without it
 ```dotnet add package Confluent.Kafka```
 
-### How it Works
+## How it Works
 
 The Kafka Server works as a middle chain for temp data storage. Here the controller(Kafka producer) takes the arduino-sensor data and sendes it to the kafka server,
 Then the KafkaForwarder gets the data from the kafka server and sends it to a Aws Lambda function - gets saved in a dynamodb table.
-![image](https://github.com/user-attachments/assets/659390a9-1d24-43c4-8e64-72bff17dfdbf)
+![image](https://github.com/user-attachments/assets/e4df8e11-7739-46bb-8cf3-c5b48533037f)
+![image](https://github.com/user-attachments/assets/d2b5fe5e-848d-470e-9371-249afdfe2c97)
 
+
+### UI updates with new data
 Now we can se that the new value is getting trough the system and is displayed in the UI. 
 ![image](https://github.com/user-attachments/assets/6f3212fc-aab8-4890-af43-4d42c8e3c0f3)
 
