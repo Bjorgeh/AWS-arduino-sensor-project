@@ -111,6 +111,6 @@ Then the KafkaForwarder gets the data from the kafka server and sends it to a Aw
 
 
 ### UI updates with new data
-Now we can se that the new value is getting trough the system and is displayed in the UI. 
+Now we can se that the new value is getting trough the system and is displayed in the UI. <br>
 ![image](https://github.com/user-attachments/assets/6f3212fc-aab8-4890-af43-4d42c8e3c0f3)
 
