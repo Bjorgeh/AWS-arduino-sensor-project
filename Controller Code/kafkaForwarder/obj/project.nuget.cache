@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "6RKv11Zb3IM=",
+  "success": true,
+  "projectFilePath": "C:\\AWS-arduino-sensor-project\\Controller Code\\kafkaForwarder\\kafkaForwarder.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\19abh\\.nuget\\packages\\confluent.kafka\\2.10.0\\confluent.kafka.2.10.0.nupkg.sha512",
+    "C:\\Users\\19abh\\.nuget\\packages\\librdkafka.redist\\2.10.0\\librdkafka.redist.2.10.0.nupkg.sha512"
+  ],
+  "logs": []
+}

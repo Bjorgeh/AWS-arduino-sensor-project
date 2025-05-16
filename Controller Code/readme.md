@@ -1,6 +1,6 @@
 # 📡 Kafka Setup on Banana Pi (KRaft, no Zookeeper)
 
-This guide explains how to set up Apache Kafka (Bitnami, KRaft mode) on a Banana Pi using Docker and Docker Compose – completely without Zookeeper.
+This guide explains how to set up Apache Kafka (Bitnami, KRaft mode) on a Banana Pi (M4) using Docker and Docker Compose – completely without Zookeeper.
 
 ---
 
@@ -99,3 +99,5 @@ docker-compose up -d
 
 ---
 
+## Add this to your dotnet apps (ArduinoToKakfaProducer & kafkaforwarder), they wont work without it
+```dotnet add package Confluent.Kafka```
