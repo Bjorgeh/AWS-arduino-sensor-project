@@ -1,22 +1,22 @@
 using System;
 using System.IO.Ports;
-using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
+using System.Timers;
+using Confluent.Kafka;
 
 namespace WaterLevelUploader
 {
     class Program
     {
         static SerialPort _serialPort;
-        static HttpClient _httpClient = new HttpClient();
         static List<int> readings = new List<int>();
-        static string lambdaUrl = "https://a2qi5icu22wrd2cgswudq6d23a0zgsfl.lambda-url.eu-north-1.on.aws/";
         static int deviceId = 1;
-        static System.Timers.Timer readTimer;
-        static System.Timers.Timer sendTimer;
+        static Timer readTimer;
+        static Timer sendTimer;
+        static IProducer<Null, string> _kafkaProducer;
 
         static async Task Main(string[] args)
         {
@@ -30,7 +30,7 @@ namespace WaterLevelUploader
                     _serialPort = new SerialPort(portName, 9600);
                     _serialPort.NewLine = "\n";
                     _serialPort.Open();
-                    Console.WriteLine($"Serial-port opened on {portName}.");
+                    Console.WriteLine($"Serial port opened on {portName}.");
                     portOpened = true;
                     break;
                 }
@@ -46,27 +46,35 @@ namespace WaterLevelUploader
                 return;
             }
 
-            readTimer = new System.Timers.Timer(60000); // 1 minute
+            // Kafka-setup
+            var kafkaConfig = new ProducerConfig
+            {
+                BootstrapServers = "localhost:9092",
+                SecurityProtocol = SecurityProtocol.Plaintext
+            };
+
+            _kafkaProducer = new ProducerBuilder<Null, string>(kafkaConfig).Build();
+
+            readTimer = new Timer(60000); // every 1 minute
             readTimer.Elapsed += ReadFromArduino;
             readTimer.AutoReset = true;
             readTimer.Start();
 
-            sendTimer = new System.Timers.Timer(300000); // 5 minutes
-            sendTimer.Elapsed += async (sender, e) => await SendToAws();
+            sendTimer = new Timer(300000); // every 5 minutes
+            sendTimer.Elapsed += async (sender, e) => await SendToKafka();
             sendTimer.AutoReset = true;
             sendTimer.Start();
 
             Console.WriteLine("Started reading and sending... Press Ctrl+C to stop.");
-            await Task.Delay(-1); // Keeps the app running
+            await Task.Delay(-1);
         }
 
-        static void ReadFromArduino(object sender, System.Timers.ElapsedEventArgs e)
+        static void ReadFromArduino(object sender, ElapsedEventArgs e)
         {
             try
             {
                 string latestLine = null;
 
-                // Les alle linjene i bufferen og ta den siste
                 while (_serialPort.BytesToRead > 0)
                 {
                     latestLine = _serialPort.ReadLine();
@@ -96,11 +104,11 @@ namespace WaterLevelUploader
             }
             finally
             {
-                _serialPort.DiscardInBuffer(); // Flush buffer uansett
+                _serialPort.DiscardInBuffer(); // flush buffer regardless
             }
         }
 
-        static async Task SendToAws()
+        static async Task SendToKafka()
         {
             if (readings.Count == 0)
             {
@@ -111,26 +119,24 @@ namespace WaterLevelUploader
             int avg = (int)Math.Round(readings.Average());
             readings.Clear();
 
-            Console.WriteLine($"[{DateTime.Now}] Average: {avg}");
-            Console.WriteLine($"Uploading: device_id={deviceId}, water_level={avg}");
-
             var payload = new
             {
                 device_id = deviceId,
-                water_level = avg
+                water_level = avg,
+                timestamp = DateTime.UtcNow.ToString("o")
             };
 
-            var content = new StringContent(JsonSerializer.Serialize(payload), System.Text.Encoding.UTF8, "application/json");
+            var json = JsonSerializer.Serialize(payload);
+            Console.WriteLine($"[{DateTime.Now}] Sending to Kafka: {json}");
 
             try
             {
-                var response = await _httpClient.PostAsync(lambdaUrl, content);
-                var responseString = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Upload complete: {response.StatusCode} - {responseString}");
+                var result = await _kafkaProducer.ProduceAsync("sensor-data", new Message<Null, string> { Value = json });
+                Console.WriteLine($"✅ Sent to Kafka: {result.TopicPartitionOffset}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Upload error: {ex.Message}");
+                Console.WriteLine($"❌ Kafka error: {ex.Message}");
             }
         }
     }
