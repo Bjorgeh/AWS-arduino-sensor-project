@@ -184,7 +184,27 @@ const SensorDashboard: React.FC = () => {
             water levels in an elegant and user-friendly interface.
           </p>
         </div>
+          <div className="diagram-card">
+            <h3>Advanced DataFlow with Kafka Integration</h3>
+            <img src="/images/dataflow_kafka.png" alt="Kafka DataFlow Diagram" className="diagram-image" />
+            <p>
+              This diagram illustrates the complete end-to-end data pipeline used in the water level monitoring system. It highlights each stage, from the physical sensor to the live dashboard UI:
+            </p>
+            <ul>
+              <li><strong>Water Sensor:</strong> Measures water level and sends analog signals to the Arduino.</li>
+              <li><strong>Arduino & Banana Pi:</strong> The Arduino reads the signal and transmits data via USB to a Banana Pi M4, which runs a .NET program to upload sensor data.</li>
+              <li><strong>Kafka Server:</strong> The Banana Pi acts as a Kafka producer. The Kafka server stores the incoming "sensor-data" and triggers a .NET consumer that forwards the data to AWS Lambda.</li>
+              <li><strong>AWS Lambda & DynamoDB:</strong> Data is received by a Lambda function written in Python and stored in a DynamoDB table. Another Lambda function serves as a public endpoint to fetch stored data.</li>
+              <li><strong>Sensor Dashboard (UI):</strong> The frontend dashboard periodically calls the fetch endpoint to display the most recent sensor data to the end user.</li>
+            </ul>
+            <p>
+              This modular architecture provides scalability, resilience, and clear separation of concerns between hardware, data transport, storage, and presentation layers.
+            </p>
+          </div>
+
+      
       </div>
+      
       <h2 className="gallery-title">📷 Setup</h2>
       <div className="carousel-container">
         <button className="carousel-button" onClick={goPrev}>←</button>
