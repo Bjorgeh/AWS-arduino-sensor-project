@@ -142,8 +142,9 @@ Frontend runs at **http://localhost:3000**, fetching data from the Lambda GET UR
   ![image](https://github.com/user-attachments/assets/88e3fdbb-ffbb-4f9e-a6b4-f74add4a5f9f)
 
 - Run Apache Kafka UI
-  ```
-docker run -d \
+  
+```
+  docker run -d \
   --name kafka-ui \
   --restart unless-stopped \
   -p 8080:8080 \
