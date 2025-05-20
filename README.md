@@ -141,3 +141,19 @@ Frontend runs at **http://localhost:3000**, fetching data from the Lambda GET UR
 - Dashboard
   ![image](https://github.com/user-attachments/assets/88e3fdbb-ffbb-4f9e-a6b4-f74add4a5f9f)
 
+- Run Apache Kafka UI
+  ```
+docker run -d \
+  --name kafka-ui \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -e KAFKA_CLUSTERS_0_NAME=local-kafka \
+  -e KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=localhost:9092 \
+  -e KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL=PLAINTEXT \
+  --network="host" \
+  provectuslabs/kafka-ui
+```
+![image](https://github.com/user-attachments/assets/4da1e525-86b8-4d8d-b85a-e662aea13d66)
+![image](https://github.com/user-attachments/assets/3c30d072-5f15-4bb5-b8d9-bb9b4336e89c)
+![image](https://github.com/user-attachments/assets/593d8a4a-3067-4640-8b9c-922aabae20d0)
+![image](https://github.com/user-attachments/assets/4d21aad1-1ad6-42a1-8e3e-b6399d7c3b70)
